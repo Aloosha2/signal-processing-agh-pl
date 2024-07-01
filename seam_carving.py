@@ -14,6 +14,7 @@ import argparse
 from numba import jit
 import librosa
 from scipy import ndimage as ndi
+import soundfile as sf
 
 SEAM_COLOR = np.array([255, 200, 200])    # seam visualization color (BGR)
 SHOULD_DOWNSIZE = True                    # if True, downsize image for faster carving
@@ -186,7 +187,7 @@ def get_minimum_seam(im, mask=None, remove_mask=None):
     if remove_mask is not None:
         M[np.where(remove_mask > MASK_THRESHOLD)] = -ENERGY_MASK_CONST * 100
 
-    backtrack = np.zeros_like(M, dtype=np.int)
+    backtrack = np.zeros_like(M, dtype=int)
 
     # populate DP matrix
     for i in range(1, h):
@@ -204,7 +205,7 @@ def get_minimum_seam(im, mask=None, remove_mask=None):
 
     # backtrack to find path
     seam_idx = []
-    boolmask = np.ones((h, w), dtype=np.bool)
+    boolmask = np.ones((h, w), dtype=bool)
     j = np.argmin(M[-1])
     for i in range(h-1, -1, -1):
         boolmask[i, j] = False
@@ -395,10 +396,11 @@ if __name__ == '__main__':
     #     assert rmask is not None
     #     output = object_removal(im, rmask, mask, args["vis"], args["hremove"])
     #     cv2.imwrite(OUTPUT_NAME, output)
-    x, sr = librosa.load("830ec6e4.wav")
+    x, sr = librosa.load("flute.wav")
     X = librosa.stft(x)
     Xdb = librosa.amplitude_to_db(abs(X))
     Xdb = carve_spectogram(Xdb, -5)
     X = librosa.db_to_amplitude(Xdb)
     X = librosa.griffinlim(X)
-    librosa.output.write_wav('830ec6e4_sc.wav', X, sr)
+    #librosa.output.write_wav('flute_sc.wav', X, sr)
+    sf.write('flute_sc.wav', X, sr)
